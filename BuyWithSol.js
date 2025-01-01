@@ -8,16 +8,14 @@ import moment from 'moment'; // For handling dates more easily
 // Set up the Solana connection to Devnet
 const connection = new Connection('https://api.devnet.solana.com');
 
-
-
+// Define sale periods
 const salePeriods = [
-    { start: '2024-12-30', end: '2025-01-09', price: 0.00105 }, // Sale 1
-    { start: '2025-01-10', end: '2025-01-19', price: 0.001125 }, // Sale 2
-    { start: '2025-01-21', end: '2025-01-30', price: 0.0012 }, // Sale 3
-    { start: '2025-01-31', end: '2025-02-09', price: 0.001275 },  // Sale 4
-    { start: '2025-02-10', end: '2025-02-19', price: 0.00135 }, // Sale 5
-    { start: '2025-02-20', end: '2025-02-29', price: 0.001425 }, // Sale 6
-
+    { start: '2024-12-29', end: '2024-12-30', price: 0.00105, availableTokens: 700 }, // Sale 1
+    { start: '2024-12-31', end: '2024-12-31', price: 0.001125, availableTokens: 800 }, // Sale 2
+    { start: '2025-01-01', end: '2025-01-30', price: 0.0012, availableTokens: 1000 }, // Sale 3
+    { start: '2025-01-31', end: '2025-02-09', price: 0.001275, availableTokens: 1000 },  // Sale 4
+    { start: '2025-02-10', end: '2025-02-19', price: 0.00135, availableTokens: 900 }, // Sale 5
+    { start: '2025-02-20', end: '2025-02-29', price: 0.001425, availableTokens: 600 }, // Sale 6
 ];
 
 // Function to get the current sale period and token price
@@ -30,7 +28,13 @@ const getCurrentSalePeriod = () => {
         
         // Check if the current date is within the sale period
         if (currentDate.isBetween(saleStart, saleEnd, null, '[]')) {
-            return { sale: i + 1, price: salePeriods[i].price, start: saleStart.format('YYYY-MM-DD'), end: saleEnd.format('YYYY-MM-DD') };
+            return { 
+                sale: i + 1, 
+                price: salePeriods[i].price, 
+                availableTokens: salePeriods[i].availableTokens, 
+                start: saleStart.format('YYYY-MM-DD'), 
+                end: saleEnd.format('YYYY-MM-DD') 
+            };
         }
     }
     
@@ -150,23 +154,82 @@ const transferToken = async (senderPrivateKey, recipientAddress, amount, tokenMi
     }
 };
 
+// Wait for transaction confirmation
+const confirmTransaction = async (transactionHash) => {
+    try {
+        const confirmation = await connection.confirmTransaction(transactionHash);
+        if (confirmation.value.err) {
+            throw new Error("Transaction failed");
+        }
+        console.log("Transaction confirmed!");
+    } catch (error) {
+        console.error("Error confirming transaction:", error);
+    }
+};
+
+// Sleep function to delay balance check
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  
+
 // Major function to buy tokens with SOL
-const buyWithSol = async (tokenHolderAddress, tokenBuyerAddress, amountOfTokenToBuy, tokenMintAddress ) => {
+const buyWithSol = async (tokenHolderAddress, tokenBuyerAddress, amountOfTokenToBuy, tokenMintAddress) => {
     const senderPrivateKey = '5eqVQ4tUcK3ZmQ2d7PwxXExPLKG2mLdxYUqoYHec8mryoFvaaJiHQmAn5Sy6JfsApNUKGLc9mUYroBWkpZaB7Cp3';  // Replace with actual private key
     const buyerPrivateKey = 'FvYGxo5NtopzP5YgW83qNYF6ioLakFG7oGNQn7hEVBNzjCtUhW3fTEHjisSBQxwSJ7QoWyFNTzrba1BKGUjybuD';    // Replace with actual private key
     const fundsReceiverAddress = 'Exgg7y6KYDMsEWgJEpp9rRenVwZ9VRTPTdXUxFCtAGkW'; // Replace with actual address
 
     let transactionSuccess = false; // Flag to ensure both transfers succeed
+    let phaseminimumBalance = 0;
+    let tokenInSale = 0;
 
- 
     try {
-
-         // Fetch the current sale period and price
+        // Fetch the current sale period and price
         const currentSale = getCurrentSalePeriod();
         if (!currentSale) {
             throw new Error('No active sale at the moment.');
         }
-        
+        await sleep(5000);  // Wait for 2 seconds before fetching the updated balance
+        // Fetch the token balance of the token holder
+        const tokenHolderBalance = await getTokenBalance(tokenHolderAddress, tokenMintAddress);
+        console.log(`Wallet Balance: ${tokenHolderBalance} tokens`);
+
+        // Calculate remaining balance after the purchase
+        const remainingBalance = tokenHolderBalance - amountOfTokenToBuy;
+        console.log(`Remaining Balance after transfer: ${remainingBalance} tokens`);
+
+        // Calculate the minimum balance left for the phase after subtracting available tokens for the current sale
+        if (currentSale.sale === 1) { // 700
+            phaseminimumBalance = 5000 - currentSale.availableTokens;
+            console.log(`Phase tokens Balance: ${phaseminimumBalance} tokens`);
+        } else if (currentSale.sale === 2) { // 800
+            phaseminimumBalance = 4300 - currentSale.availableTokens;
+            console.log(`Phase tokens Balance: ${phaseminimumBalance} tokens`);
+        } else if (currentSale.sale === 3) { // 1000
+            phaseminimumBalance = 3500 - currentSale.availableTokens;
+            console.log(`Phase tokens Balance: ${phaseminimumBalance} tokens`);
+        } else if (currentSale.sale === 4) { // 1000
+            phaseminimumBalance = 2500 - currentSale.availableTokens;
+            console.log(`Phase tokens Balance: ${phaseminimumBalance} tokens`);
+        } else if (currentSale.sale === 5) { // 900
+            phaseminimumBalance = 1500 - currentSale.availableTokens;
+            console.log(`Phase tokens Balance: ${phaseminimumBalance} tokens`);
+        } else if (currentSale.sale === 6) { // 600
+            phaseminimumBalance = 600 - currentSale.availableTokens;
+            console.log(`Phase tokens Balance: ${phaseminimumBalance} tokens`);
+        } else {
+            throw new Error('Sale period not defined.');
+        }
+
+        tokenInSale = remainingBalance - phaseminimumBalance;
+        console.log(`Tokens in sale: ${tokenInSale} tokens`);
+
+        if (phaseminimumBalance > remainingBalance || tokenInSale < 0) {
+            throw new Error('Not enough tokens for the current sale.');
+        }
+
+        console.log(`Token holder has enough tokens: ${remainingBalance} tokens`);
+        console.log(`Remaining tokens in this sale: ${remainingBalance - phaseminimumBalance} tokens`);
+
         // The price for the token in the current sale
         const tokenPriceUSD = currentSale.price;
         console.log(`Current Sale ${currentSale.sale} is active. Token Price: ${tokenPriceUSD} USD`);
@@ -180,12 +243,7 @@ const buyWithSol = async (tokenHolderAddress, tokenBuyerAddress, amountOfTokenTo
         const amountInSOL = amountInUSDT / solPrice;
         console.log(`Amount in SOL required: ${amountInSOL.toFixed(8)} SOL`);
 
-        const tokenHolderBalance = await getTokenBalance(tokenHolderAddress, tokenMintAddress);
-        if (tokenHolderBalance < amountOfTokenToBuy) {
-            throw new Error('Token holder does not have enough tokens');
-        }
-        console.log(`Token holder has enough tokens: ${tokenHolderBalance} tokens`);
-
+        // Fetch buyer's SOL balance
         const buyerSolBalance = await getSolBalance(tokenBuyerAddress);
         if (buyerSolBalance < amountInSOL) {
             throw new Error('Buyer does not have enough SOL');
@@ -194,33 +252,26 @@ const buyWithSol = async (tokenHolderAddress, tokenBuyerAddress, amountOfTokenTo
 
         // Begin atomic transaction: Try both transfers together
         const solTransferHash = await transferSol(buyerPrivateKey, fundsReceiverAddress, amountInSOL.toFixed(8));
-        const tokenTransferHash = await transferToken(senderPrivateKey, tokenBuyerAddress, amountOfTokenToBuy, tokenMintAddress);
-         
-        // If both transfers succeed, set success flag
-        if (solTransferHash && tokenTransferHash) {
-            transactionSuccess = true;
-            console.log('Both transfers succeeded');
-        }
-         console.log(`Sol transferHash: ${solTransferHash}  `);
-         console.log(`Token transferHash: ${tokenTransferHash}  `);
- 
-    } catch (error) {
-        console.error('Error in BuyWithSol:', error);
-        // If any transfer fails, the process will fail and both transfers will be rolled back
-    }
+        await confirmTransaction(solTransferHash); // Wait for the SOL transfer to be confirmed
 
-    // Rollback if either transfer fails
-    if (!transactionSuccess) {
-        console.error("Transaction failed: One or both transfers failed, rolling back");
-    } else {
-        console.log("Transaction completed successfully");
+        const tokenTransferHash = await transferToken(senderPrivateKey, tokenBuyerAddress, amountOfTokenToBuy, tokenMintAddress);
+        await confirmTransaction(tokenTransferHash); // Wait for the token transfer to be confirmed
+        console.log(`Transaction successful. ${amountOfTokenToBuy} tokens sent to buyer and ${amountInSOL.toFixed(8)} SOL received`);
+        console.log(`Sol transaction Hash: ${solTransferHash}`);
+        console.log(`Token transaction Hash: ${tokenTransferHash}`);
+        transactionSuccess = true;
+
+    } catch (error) {
+        console.error(`Error during transaction: ${error.message}`);
+        if (transactionSuccess) {
+            // Handle partial rollback if needed (e.g., reverse token or SOL transfers)
+        }
     }
 };
 
-// Example usage
+
 const tokenHolderAddress = 'Agb7ne7s4hMoRjQX82ME7q5XhjMW5bfkCn5HShkTsnk3';
 const tokenBuyerAddress = 'A8Q6ubg2yWpGEt3ppAv79K3ifvznis4McGZuT7QgDerX';
-const amountOfTokenToBuy = 80;
+const amountOfTokenToBuy = 100;
 const tokenMintAddress = 'AfAqPBBiQErFXXeUAwkoZWDaEAyshZCMndXd55gM2aX';
-
-buyWithSol(tokenHolderAddress, tokenBuyerAddress, amountOfTokenToBuy, tokenMintAddress);
+buyWithSol(tokenHolderAddress, tokenBuyerAddress, amountOfTokenToBuy,tokenMintAddress);

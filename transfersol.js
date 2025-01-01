@@ -37,7 +37,7 @@ async function sendSol(senderPrivateKey, recipientAddress, amount) {
 
 // Example usage
 const senderPrivateKey = "5eqVQ4tUcK3ZmQ2d7PwxXExPLKG2mLdxYUqoYHec8mryoFvaaJiHQmAn5Sy6JfsApNUKGLc9mUYroBWkpZaB7Cp3";  // Replace with actual private key
-const recipientAddress = "A8Q6ubg2yWpGEt3ppAv79K3ifvznis4McGZuT7QgDerX";  // Replace with actual recipient address
-const amountToTransfer = 0.00016245; // Amount to transfer (in SOL)
+const recipientAddress = "Agb7ne7s4hMoRjQX82ME7q5XhjMW5bfkCn5HShkTsnk3";  // Replace with actual recipient address
+const amountToTransfer = 1; // Amount to transfer (in SOL)
 
 sendSol(senderPrivateKey, recipientAddress, amountToTransfer);

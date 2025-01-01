@@ -10,10 +10,10 @@ import bs58 from "bs58";
 const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 
 // Replace with actual sender's and receiver's public keys
-const senderPublicKey = "Exgg7y6KYDMsEWgJEpp9rRenVwZ9VRTPTdXUxFCtAGkW";
+const senderPublicKey = "4zAoNKa2pHnSwhYN5XEgK4K7RvhGaQvM3a8LwqtXShVE";
  
 // Replace with your custom token's mint address (SPL token's mint address)
-const tokenMintAddress = "AfAqPBBiQErFXXeUAwkoZWDaEAyshZCMndXd55gM2aX";  // Replace this with the actual mint address of your custom token
+const tokenMintAddress = "6aMEYfWrthqmmW3i72sWbD1ne8jaX8GcbFHL7esH1V8X";  // Replace this with the actual mint address of your custom token
 
 (async () => {
     try {
@@ -33,7 +33,7 @@ const tokenMintAddress = "AfAqPBBiQErFXXeUAwkoZWDaEAyshZCMndXd55gM2aX";  // Repl
             : 0n;  // Return 0 BigInt if no token balance is found
         
         // Convert balances from the smallest unit (token's decimal places) to human-readable format
-        const decimals = 9;  // Updated to 9 decimals for your token
+        const decimals = 6;  // Updated to 9 decimals for your token
         const senderTokenBalanceInTokens = Number(senderTokenBalance) / (10 ** decimals);
  
         // Print the balance in custom token

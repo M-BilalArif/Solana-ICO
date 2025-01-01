@@ -1,15 +1,9 @@
-
-
-
-// this code works fine it transfer ico token from 1 wallet to another wallet 
-
 import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import bs58 from "bs58";
-import { 
-    getAssociatedTokenAddress, 
-    createAssociatedTokenAccount, 
-    createTransferInstruction, 
-    TOKEN_PROGRAM_ID 
+import {
+    getAssociatedTokenAddress,
+    createAssociatedTokenAccountInstruction,
+    createTransferInstruction,
 } from "@solana/spl-token";
 
 // Create a connection to the Solana devnet
@@ -30,52 +24,44 @@ async function sendSPLToken(senderPrivateKey, recipientAddress, amount, tokenMin
     const senderTokenAccount = await getAssociatedTokenAddress(tokenMintPublicKey, senderWallet.publicKey);
 
     // Get recipient's associated token account for the custom token
-    const recipientTokenAccount = await getAssociatedTokenAddress(tokenMintPublicKey, recipientPublicKey);
+    const recipientTokenAccount = await getAssociatedTokenAddress(
+        tokenMintPublicKey,
+        recipientPublicKey,
+        true // Allow owner off-curve
+    );
 
-    // Check if sender's token account exists, if not, create it
-    const senderTokenAccountInfo = await connection.getAccountInfo(senderTokenAccount);
-    if (!senderTokenAccountInfo) {
-        console.log("Sender's token account does not exist, creating it...");
-        const createSenderTokenAccountTx = new Transaction().add(
-            createAssociatedTokenAccount(
-                senderWallet.publicKey, // payer (sender)
-                senderWallet.publicKey, // owner
-                tokenMintPublicKey // mint
-            )
-        );
-        await connection.sendTransaction(createSenderTokenAccountTx, [senderWallet]);
-    }
+    const transaction = new Transaction();
 
-    // Check if recipient's token account exists, if not, create it
+    // Check if recipient's token account exists; if not, create it
     const recipientTokenAccountInfo = await connection.getAccountInfo(recipientTokenAccount);
     if (!recipientTokenAccountInfo) {
         console.log("Recipient's token account does not exist, creating it...");
-        const createRecipientTokenAccountTx = new Transaction().add(
-            createAssociatedTokenAccount(
-                senderWallet.publicKey, // payer (sender)
-                recipientPublicKey, // owner
-                tokenMintPublicKey // mint
+        transaction.add(
+            createAssociatedTokenAccountInstruction(
+                senderWallet.publicKey, // Payer
+                recipientTokenAccount,  // New associated token account
+                recipientPublicKey,     // Owner of the token account
+                tokenMintPublicKey      // Token mint
             )
         );
-        await connection.sendTransaction(createRecipientTokenAccountTx, [senderWallet]);
     }
 
-    // Create a transaction to transfer SPL token
-    let transaction = new Transaction().add(
+    // Create a transfer instruction
+    transaction.add(
         createTransferInstruction(
-            senderTokenAccount, // Sender's token account address
-            recipientTokenAccount, // Recipient's token account address
-            senderWallet.publicKey, // Sender's public key (signer)
-            amount * (10 ** 9) // Amount to transfer, assuming 6 decimals for the token
+            senderTokenAccount,      // Sender's token account
+            recipientTokenAccount,   // Recipient's token account
+            senderWallet.publicKey,  // Signer (sender)
+            amount * 10 ** 9        // Amount to transfer, adjust decimals
         )
     );
 
     // Set the fee payer as the sender's public key
     transaction.feePayer = senderWallet.publicKey;
 
-    // Send the transaction
     try {
-        let transactionHash = await connection.sendTransaction(transaction, [senderWallet]);
+        // Send the transaction
+        const transactionHash = await connection.sendTransaction(transaction, [senderWallet]);
         console.log(`Transaction Hash: ${transactionHash}`);
     } catch (error) {
         console.error("Transaction failed:", error);
@@ -83,8 +69,8 @@ async function sendSPLToken(senderPrivateKey, recipientAddress, amount, tokenMin
 }
 
 // Example usage
-const senderPrivateKey = "5eqVQ4tUcK3ZmQ2d7PwxXExPLKG2mLdxYUqoYHec8mryoFvaaJiHQmAn5Sy6JfsApNUKGLc9mUYroBWkpZaB7Cp3";  // Replace with actual private key
-const recipientAddress = "A8Q6ubg2yWpGEt3ppAv79K3ifvznis4McGZuT7QgDerX";  // Replace with actual recipient address
+const senderPrivateKey = "5eqVQ4tUcK3ZmQ2d7PwxXExPLKG2mLdxYUqoYHec8mryoFvaaJiHQmAn5Sy6JfsApNUKGLc9mUYroBWkpZaB7Cp3"; // Replace with actual private key
+const recipientAddress = "AewuvZG6EDUFJ72ujEBSbQRr86nFdPZ2YgsYc4aCJKKy"; // Replace with actual recipient address
 const amountToTransfer = 50; // Amount to transfer
 const tokenMintAddress = "AfAqPBBiQErFXXeUAwkoZWDaEAyshZCMndXd55gM2aX"; // Replace with the mint address of your SPL token
 
