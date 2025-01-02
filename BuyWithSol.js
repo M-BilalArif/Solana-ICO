@@ -13,8 +13,8 @@ const connection = new Connection("https://api.devnet.solana.com");
 
 // --- Sale Periods ---
 const salePeriods = [
-  { start: "2024-12-29", end: "2025-01-01", price: 0.00105, availableTokens: 70000000 },
-  { start: "2025-01-02", end: "2025-01-20", price: 0.001125, availableTokens: 80000000 },
+  { start: "2024-12-29", end: "2025-01-02", price: 0.00105, availableTokens: 70000000 },
+  { start: "2025-01-03", end: "2025-01-20", price: 0.001125, availableTokens: 80000000 },
   { start: "2025-01-21", end: "2025-01-30", price: 0.0012, availableTokens: 100000000 },
   { start: "2025-01-31", end: "2025-02-09", price: 0.001275, availableTokens: 100000000 },
   { start: "2025-02-10", end: "2025-02-19", price: 0.00135, availableTokens: 90000000 },
@@ -24,9 +24,9 @@ const salePeriods = [
 // --- Global Addresses/Keys ---
 const USDTaddress = "4evpaeTCYqaYqgeonDcfY8BzXRWjxUndEpKCFFNYarSP";
 const fundsReceiverAddress = "Exgg7y6KYDMsEWgJEpp9rRenVwZ9VRTPTdXUxFCtAGkW";
-const tokenHolderAddress = "Agb7ne7s4hMoRjQX82ME7q5XhjMW5bfkCn5HShkTsnk3";
+const ICOHolderAddress = "Agb7ne7s4hMoRjQX82ME7q5XhjMW5bfkCn5HShkTsnk3";
 const ICOToken = "5nxUnRTw9TxNJVL7CqVyVCEZFJQR5Pg2iDccfNg5yALA";
-const senderPrivateKey =
+const ICOTOkenPrivateKey =
   "5eqVQ4tUcK3ZmQ2d7PwxXExPLKG2mLdxYUqoYHec8mryoFvaaJiHQmAn5Sy6JfsApNUKGLc9mUYroBWkpZaB7Cp3";
 const buyerPrivateKey =
   "2ZSRCrt9bqYsG3Uu7UEyZCSEnnnFxXLeCaTQtA9v1iKh9BcYaKLVEbdxYBnLtMfNdDN8HSh2s4RMe9DQ9LBe6F3i";
@@ -87,8 +87,8 @@ const getSolBalance = async (walletAddress) => {
 };
 
 // Transfer SOL from one wallet to another
-const transferSol = async (senderPrivateKey, recipientAddress, amount) => {
-    const senderWallet = solanaweb3.Keypair.fromSecretKey(bs58.decode(senderPrivateKey));
+const transferSol = async (ICOTOkenPrivateKey, recipientAddress, amount) => {
+    const senderWallet = solanaweb3.Keypair.fromSecretKey(bs58.decode(ICOTOkenPrivateKey));
     const recipientPublicKey = new PublicKey(recipientAddress);
 
     let transaction = new solanaweb3.Transaction().add(
@@ -111,13 +111,13 @@ const transferSol = async (senderPrivateKey, recipientAddress, amount) => {
 };
 
 const transferToken = async (
-  senderPrivateKey,
+    ICOTOkenPrivateKey,
   recipientAddress,
   amount,
   ICOToken
 ) => {
   try {
-    const senderWallet = Keypair.fromSecretKey(bs58.decode(senderPrivateKey));
+    const senderWallet = Keypair.fromSecretKey(bs58.decode(ICOTOkenPrivateKey));
     const recipientPublicKey = new PublicKey(recipientAddress);
     const tokenMintPublicKey = new PublicKey(ICOToken);
     const mintAccountInfo = await connection.getParsedAccountInfo(tokenMintPublicKey);
@@ -207,7 +207,7 @@ const buyWithSol = async (tokenBuyerAddress, amountOfTokenToBuy) => {
 
     await sleep(5000);
 
-    const tokenHolderBalance = await getTokenBalance(tokenHolderAddress, ICOToken);
+    const tokenHolderBalance = await getTokenBalance(ICOHolderAddress, ICOToken);
     const remainingBalance = tokenHolderBalance - amountOfTokenToBuy;
     const phaseminimumBalance = calculatePhaseBalance(currentSale);
     const tokenInSale = remainingBalance - phaseminimumBalance;
@@ -236,7 +236,7 @@ const buyWithSol = async (tokenBuyerAddress, amountOfTokenToBuy) => {
  
     // 2) Transfer token from tokenHolder -> buyer
     const tokenTransferHash = await transferToken(
-      senderPrivateKey,
+        ICOTOkenPrivateKey,
       tokenBuyerAddress,
       amountOfTokenToBuy,
       ICOToken
@@ -267,7 +267,7 @@ const buyWithUSDT = async (tokenBuyerAddress, amountOfTokenToBuy) => {
 
     await sleep(8000);
 
-    const tokenHolderBalance = await getTokenBalance(tokenHolderAddress, ICOToken);
+    const tokenHolderBalance = await getTokenBalance(ICOHolderAddress, ICOToken);
     const remainingBalance = tokenHolderBalance - amountOfTokenToBuy;
     const phaseminimumBalance = calculatePhaseBalance(currentSale);
     const tokenInSale = remainingBalance - phaseminimumBalance;
@@ -294,7 +294,7 @@ const buyWithUSDT = async (tokenBuyerAddress, amountOfTokenToBuy) => {
  
     // 2) Transfer token from tokenHolder -> buyer
     const tokenTransferHash = await transferToken(
-      senderPrivateKey,
+        ICOTOkenPrivateKey,
       tokenBuyerAddress,
       amountOfTokenToBuy,
       ICOToken
@@ -318,5 +318,5 @@ const tokenBuyerAddress = "4zAoNKa2pHnSwhYN5XEgK4K7RvhGaQvM3a8LwqtXShVE";
 const amountOfTokenToBuy = 1000000;
 
 // Uncomment whichever purchase flow you want to test
-// buyWithUSDT(tokenBuyerAddress, amountOfTokenToBuy);
-buyWithSol(tokenBuyerAddress, amountOfTokenToBuy);
+buyWithUSDT(tokenBuyerAddress, amountOfTokenToBuy);
+// buyWithSol(tokenBuyerAddress, amountOfTokenToBuy);
