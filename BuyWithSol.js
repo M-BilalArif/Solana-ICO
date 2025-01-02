@@ -13,19 +13,19 @@ const connection = new Connection("https://api.devnet.solana.com");
 
 // --- Sale Periods ---
 const salePeriods = [
-  { start: "2024-12-29", end: "2025-01-01", price: 0.00105, availableTokens: 700 },
-  { start: "2025-01-02", end: "2025-01-20", price: 0.001125, availableTokens: 800 },
-  { start: "2025-01-21", end: "2025-01-30", price: 0.0012, availableTokens: 1000 },
-  { start: "2025-01-31", end: "2025-02-09", price: 0.001275, availableTokens: 1000 },
-  { start: "2025-02-10", end: "2025-02-19", price: 0.00135, availableTokens: 900 },
-  { start: "2025-02-20", end: "2025-02-29", price: 0.001425, availableTokens: 600 },
+  { start: "2024-12-29", end: "2025-01-01", price: 0.00105, availableTokens: 70000000 },
+  { start: "2025-01-02", end: "2025-01-20", price: 0.001125, availableTokens: 80000000 },
+  { start: "2025-01-21", end: "2025-01-30", price: 0.0012, availableTokens: 100000000 },
+  { start: "2025-01-31", end: "2025-02-09", price: 0.001275, availableTokens: 100000000 },
+  { start: "2025-02-10", end: "2025-02-19", price: 0.00135, availableTokens: 90000000 },
+  { start: "2025-02-20", end: "2025-02-29", price: 0.001425, availableTokens: 60000000 },
 ];
 
 // --- Global Addresses/Keys ---
-const USDTaddress = "6aMEYfWrthqmmW3i72sWbD1ne8jaX8GcbFHL7esH1V8X";
+const USDTaddress = "4evpaeTCYqaYqgeonDcfY8BzXRWjxUndEpKCFFNYarSP";
 const fundsReceiverAddress = "Exgg7y6KYDMsEWgJEpp9rRenVwZ9VRTPTdXUxFCtAGkW";
 const tokenHolderAddress = "Agb7ne7s4hMoRjQX82ME7q5XhjMW5bfkCn5HShkTsnk3";
-const tokenMintAddress = "AfAqPBBiQErFXXeUAwkoZWDaEAyshZCMndXd55gM2aX";
+const ICOToken = "5nxUnRTw9TxNJVL7CqVyVCEZFJQR5Pg2iDccfNg5yALA";
 const senderPrivateKey =
   "5eqVQ4tUcK3ZmQ2d7PwxXExPLKG2mLdxYUqoYHec8mryoFvaaJiHQmAn5Sy6JfsApNUKGLc9mUYroBWkpZaB7Cp3";
 const buyerPrivateKey =
@@ -61,10 +61,10 @@ const fetchSolanaPrice = async () => {
   }
 };
 
-const getTokenBalance = async (walletAddress, tokenMintAddress, decimals = 9) => {
+const getTokenBalance = async (walletAddress, ICOToken, decimals = 9) => {
   try {
     const senderPubKey = new PublicKey(walletAddress);
-    const mintAddress = new PublicKey(tokenMintAddress);
+    const mintAddress = new PublicKey(ICOToken);
     const senderTokenAccount = await getAssociatedTokenAddress(mintAddress, senderPubKey);
     const senderTokenAccountInfo = await connection.getAccountInfo(senderTokenAccount);
     const senderTokenBalance = senderTokenAccountInfo
@@ -114,12 +114,12 @@ const transferToken = async (
   senderPrivateKey,
   recipientAddress,
   amount,
-  tokenMintAddress
+  ICOToken
 ) => {
   try {
     const senderWallet = Keypair.fromSecretKey(bs58.decode(senderPrivateKey));
     const recipientPublicKey = new PublicKey(recipientAddress);
-    const tokenMintPublicKey = new PublicKey(tokenMintAddress);
+    const tokenMintPublicKey = new PublicKey(ICOToken);
     const mintAccountInfo = await connection.getParsedAccountInfo(tokenMintPublicKey);
     const decimals = mintAccountInfo.value.data.parsed.info.decimals;
     const amountInSmallestUnit = Math.round(amount * 10 ** decimals);
@@ -182,17 +182,17 @@ const calculatePhaseBalance = (currentSale) => {
   // from a hypothetical total pool. Adjust the "basePool" numbers per phase as needed.
   switch (currentSale.sale) {
     case 1:
-      return 5000 - currentSale.availableTokens;
+      return 500000000 - currentSale.availableTokens;
     case 2:
-      return 4300 - currentSale.availableTokens;
+      return 430000000 - currentSale.availableTokens;
     case 3:
-      return 3500 - currentSale.availableTokens;
+      return 350000000 - currentSale.availableTokens;
     case 4:
-      return 2500 - currentSale.availableTokens;
+      return 250000000 - currentSale.availableTokens;
     case 5:
-      return 1500 - currentSale.availableTokens;
+      return 150000000 - currentSale.availableTokens;
     case 6:
-      return 600 - currentSale.availableTokens;
+      return 60000000 - currentSale.availableTokens;
     default:
       throw new Error("Sale period not defined.");
   }
@@ -207,7 +207,7 @@ const buyWithSol = async (tokenBuyerAddress, amountOfTokenToBuy) => {
 
     await sleep(5000);
 
-    const tokenHolderBalance = await getTokenBalance(tokenHolderAddress, tokenMintAddress);
+    const tokenHolderBalance = await getTokenBalance(tokenHolderAddress, ICOToken);
     const remainingBalance = tokenHolderBalance - amountOfTokenToBuy;
     const phaseminimumBalance = calculatePhaseBalance(currentSale);
     const tokenInSale = remainingBalance - phaseminimumBalance;
@@ -239,7 +239,7 @@ const buyWithSol = async (tokenBuyerAddress, amountOfTokenToBuy) => {
       senderPrivateKey,
       tokenBuyerAddress,
       amountOfTokenToBuy,
-      tokenMintAddress
+      ICOToken
     );
     await confirmTransaction(tokenTransferHash);
 
@@ -267,7 +267,7 @@ const buyWithUSDT = async (tokenBuyerAddress, amountOfTokenToBuy) => {
 
     await sleep(8000);
 
-    const tokenHolderBalance = await getTokenBalance(tokenHolderAddress, tokenMintAddress);
+    const tokenHolderBalance = await getTokenBalance(tokenHolderAddress, ICOToken);
     const remainingBalance = tokenHolderBalance - amountOfTokenToBuy;
     const phaseminimumBalance = calculatePhaseBalance(currentSale);
     const tokenInSale = remainingBalance - phaseminimumBalance;
@@ -297,7 +297,7 @@ const buyWithUSDT = async (tokenBuyerAddress, amountOfTokenToBuy) => {
       senderPrivateKey,
       tokenBuyerAddress,
       amountOfTokenToBuy,
-      tokenMintAddress
+      ICOToken
     );
     await confirmTransaction(tokenTransferHash);
 
@@ -315,8 +315,8 @@ const buyWithUSDT = async (tokenBuyerAddress, amountOfTokenToBuy) => {
 
 // --- Example Usage ---
 const tokenBuyerAddress = "4zAoNKa2pHnSwhYN5XEgK4K7RvhGaQvM3a8LwqtXShVE";
-const amountOfTokenToBuy = 800;
+const amountOfTokenToBuy = 1000000;
 
 // Uncomment whichever purchase flow you want to test
-buyWithUSDT(tokenBuyerAddress, amountOfTokenToBuy);
-// buyWithSol(tokenBuyerAddress, amountOfTokenToBuy);
+// buyWithUSDT(tokenBuyerAddress, amountOfTokenToBuy);
+buyWithSol(tokenBuyerAddress, amountOfTokenToBuy);
