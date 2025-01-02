@@ -198,10 +198,8 @@ const calculatePhaseBalance = (currentSale) => {
   }
 };
 
-// --- Core Logic for Buying Tokens ---
-const buyWithSol = async (tokenBuyerAddress, amountOfTokenToBuy) => {
-  let transactionSuccess = false;
-  try {
+const BuyWithUSDT = async (amountOfTokenToBuy) => {
+   try {
     const currentSale = getCurrentSalePeriod();
     if (!currentSale) throw new Error("No active sale at the moment.");
 
@@ -211,113 +209,60 @@ const buyWithSol = async (tokenBuyerAddress, amountOfTokenToBuy) => {
     const remainingBalance = tokenHolderBalance - amountOfTokenToBuy;
     const phaseminimumBalance = calculatePhaseBalance(currentSale);
     const tokenInSale = remainingBalance - phaseminimumBalance;
-
     if (phaseminimumBalance > remainingBalance || tokenInSale < 0) {
       throw new Error("Not enough tokens for the current sale.");
     }
 
     const tokenPriceUSD = currentSale.price;
     const amountInUSDT = amountOfTokenToBuy * tokenPriceUSD;
+
+    console.log(`VLN Price ${tokenPriceUSD}.`);
+    console.log(`Price in USDT ${amountInUSDT}.`);
+    return amountInUSDT; // Return the amount in USDT
+  } catch (error) {
+    console.error(`Error : ${error.message}`);
+    
+  }
+  };
+
+// --- Core Logic for Buying Tokens ---
+const buyWithSol = async (amountOfTokenToBuy) => {
+  try {
+    // Get the amount in USDT from BuyWithUSDT function
+    const amountInUSDT = await BuyWithUSDT(amountOfTokenToBuy);
+
     const solPrice = await fetchSolanaPrice();
     const amountInSOL = amountInUSDT / solPrice;
-    const buyerSolBalance = await getSolBalance(tokenBuyerAddress);
 
-    if (buyerSolBalance < amountInSOL) {
-      throw new Error("Buyer does not have enough SOL");
-    }
- 
-    // 1) Transfer SOL from buyer -> fundsReceiver
-    const solTransferHash = await transferSol(
-      buyerPrivateKey,
-      fundsReceiverAddress,
-      amountInSOL.toFixed(8)
-    );
-    await confirmTransaction(solTransferHash);
- 
-    // 2) Transfer token from tokenHolder -> buyer
-    const tokenTransferHash = await transferToken(
-        ICOTokenPrivateKey,
-      tokenBuyerAddress,
-      amountOfTokenToBuy,
-      ICOToken
-    );
-    await confirmTransaction(tokenTransferHash);
+    console.log(`Amount in SOL: ${amountInSOL}`);
 
-    transactionSuccess = true;
-    console.log(
-      `Transaction successful. ${amountOfTokenToBuy} tokens sent, ~${amountInSOL.toFixed(
-        8
-      )} SOL received.`
-    );
-    console.log(`SOL transfer: ${solTransferHash}`);
-    console.log(`Token transfer: ${tokenTransferHash}`);
+    // Here you can proceed with the transfer logic after calculating the amounts
+
   } catch (error) {
     console.error(`Error during SOL purchase transaction: ${error.message}`);
-    if (transactionSuccess) {
-      // If partial rollback needed, handle here
-    }
   }
 };
 
-const buyWithUSDT = async (tokenBuyerAddress, amountOfTokenToBuy) => {
-      
-  let transactionSuccess = false;
-  try {
-    const currentSale = getCurrentSalePeriod();
-    if (!currentSale) throw new Error("No active sale at the moment.");
 
-    await sleep(8000);
+const ExicuteTransaction = async (tokenBuyerAddress,amountOfTokenToTransfer) => {
 
-    const tokenHolderBalance = await getTokenBalance(ICOHolderAddress, ICOToken);
-    const remainingBalance = tokenHolderBalance - amountOfTokenToBuy;
-    const phaseminimumBalance = calculatePhaseBalance(currentSale);
-    const tokenInSale = remainingBalance - phaseminimumBalance;
-
-    if (phaseminimumBalance > remainingBalance || tokenInSale < 0) {
-      throw new Error("Not enough tokens for the current sale.");
-    }
-
-    const tokenPriceUSD = currentSale.price;
-    const amountInUSDT = amountOfTokenToBuy * tokenPriceUSD;
-    const buyerUSDTBalance = await getTokenBalance(tokenBuyerAddress, USDTaddress, 6);
-
-    if (buyerUSDTBalance < amountInUSDT) {
-      throw new Error("Buyer does not have enough USDT");
-    }
-    // 1) Transfer USDT from buyer -> fundsReceiver
-    const usdtTransferHash = await transferToken(
-      buyerPrivateKey,
-      fundsReceiverAddress,
-      amountInUSDT,
-      USDTaddress
-    );
-    await confirmTransaction(usdtTransferHash);
- 
-    // 2) Transfer token from tokenHolder -> buyer
-    const tokenTransferHash = await transferToken(
-        ICOTokenPrivateKey,
-      tokenBuyerAddress,
-      amountOfTokenToBuy,
-      ICOToken
-    );
-    await confirmTransaction(tokenTransferHash);
-
-    transactionSuccess = true;
-    console.log(`Transaction successful. ${amountOfTokenToBuy} tokens sent, ~${amountInUSDT.toFixed(2)} USDT received.`);
-    console.log(`USDT transfer: ${usdtTransferHash}`);
-    console.log(`Token transfer: ${tokenTransferHash}`);
-  } catch (error) {
-    console.error(`Error during USDT purchase transaction: ${error.message}`);
-    if (transactionSuccess) {
-      // If partial rollback needed, handle here
-    }
-  }
+  const tokenTransferHash = await transferToken(
+            ICOTokenPrivateKey,
+          tokenBuyerAddress,
+          amountOfTokenToTransfer,
+          ICOToken
+        );
+        await confirmTransaction(tokenTransferHash);
+        console.log(`Transaction Hash: ${tokenTransferHash} `);
 };
 
-// --- Example Usage ---
-const amountOfTokenToBuy = 10000;
-const tokenBuyerAddress = "4zAoNKa2pHnSwhYN5XEgK4K7RvhGaQvM3a8LwqtXShVE";
 
+const amountOfTokenToTransfer = 1000;
+
+
+// const tokenBuyerAddress = "4zAoNKa2pHnSwhYN5XEgK4K7RvhGaQvM3a8LwqtXShVE";
+// BuyWithUSDT(amountOfTokenToBuy);
 // Uncomment whichever purchase flow you want to test
-buyWithUSDT(tokenBuyerAddress, amountOfTokenToBuy);
-// buyWithSol(tokenBuyerAddress, amountOfTokenToBuy);
+
+buyWithSol(amountOfTokenToTransfer);
+// ExicuteTransaction(tokenBuyerAddress,amountOfTokenToTransfer);
