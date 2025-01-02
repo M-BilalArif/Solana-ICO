@@ -15,8 +15,8 @@ const connection = new Connection("https://api.devnet.solana.com");
 
 // --- Sale Periods ---
 const salePeriods = [
-  { start: "2024-12-29", end: "2025-01-02", price: 0.00105, availableTokens: 70000000 },
-  { start: "2025-01-03", end: "2025-01-20", price: 0.001125, availableTokens: 80000000 },
+  { start: "2024-12-29", end: "2025-01-03", price: 0.00105, availableTokens: 70000000 },
+  { start: "2025-01-04", end: "2025-01-20", price: 0.001125, availableTokens: 80000000 },
   { start: "2025-01-21", end: "2025-01-30", price: 0.0012, availableTokens: 100000000 },
   { start: "2025-01-31", end: "2025-02-09", price: 0.001275, availableTokens: 100000000 },
   { start: "2025-02-10", end: "2025-02-19", price: 0.00135, availableTokens: 90000000 },
@@ -257,9 +257,9 @@ const ExicuteTransaction = async (tokenBuyerAddress,amountOfTokenToTransfer) => 
 };
 
 
-const amountOfTokenToTransfer = 1000;
+const amountOfTokenToBuy = 1000;
 // const tokenBuyerAddress = "4zAoNKa2pHnSwhYN5XEgK4K7RvhGaQvM3a8LwqtXShVE";
 
-// BuyWithUSDT(amountOfTokenToBuy);
-// buyWithSol(amountOfTokenToTransfer);
-// ExicuteTransaction(tokenBuyerAddress,amountOfTokenToTransfer);
+BuyWithUSDT(amountOfTokenToBuy);
+// buyWithSol(amountOfTokenToBuy);
+// ExicuteTransaction(tokenBuyerAddress,amountOfTokenToBuy);
