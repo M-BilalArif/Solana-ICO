@@ -7,6 +7,8 @@ import {
 } from "@solana/spl-token";
 import bs58 from "bs58";
 import moment from "moment";
+import dotenv from 'dotenv';
+dotenv.config({ path: './keys.env' }); 
 
 // --- Connection Setup ---
 const connection = new Connection("https://api.devnet.solana.com");
@@ -22,14 +24,12 @@ const salePeriods = [
 ];
 
 // --- Global Addresses/Keys ---
-const USDTaddress = "4evpaeTCYqaYqgeonDcfY8BzXRWjxUndEpKCFFNYarSP";
-const fundsReceiverAddress = "Exgg7y6KYDMsEWgJEpp9rRenVwZ9VRTPTdXUxFCtAGkW";
-const ICOHolderAddress = "Agb7ne7s4hMoRjQX82ME7q5XhjMW5bfkCn5HShkTsnk3";
-const ICOToken = "5nxUnRTw9TxNJVL7CqVyVCEZFJQR5Pg2iDccfNg5yALA";
-const ICOTOkenPrivateKey =
-  "5eqVQ4tUcK3ZmQ2d7PwxXExPLKG2mLdxYUqoYHec8mryoFvaaJiHQmAn5Sy6JfsApNUKGLc9mUYroBWkpZaB7Cp3";
-const buyerPrivateKey =
-  "2ZSRCrt9bqYsG3Uu7UEyZCSEnnnFxXLeCaTQtA9v1iKh9BcYaKLVEbdxYBnLtMfNdDN8HSh2s4RMe9DQ9LBe6F3i";
+const USDTaddress = process.env.USDT_ADDRESS;
+const fundsReceiverAddress = process.env.FUNDS_RECEIVER_ADDRESS;
+const ICOHolderAddress = process.env.ICO_HOLDER_ADDRESS;
+const ICOToken = process.env.ICO_TOKEN;
+const ICOTokenPrivateKey = process.env.ICO_TOKEN_PRIVATE_KEY;
+const buyerPrivateKey = process.env.BUYER_PRIVATE_KEY;
 
 // --- Helper Functions ---
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -236,7 +236,7 @@ const buyWithSol = async (tokenBuyerAddress, amountOfTokenToBuy) => {
  
     // 2) Transfer token from tokenHolder -> buyer
     const tokenTransferHash = await transferToken(
-        ICOTOkenPrivateKey,
+        ICOTokenPrivateKey,
       tokenBuyerAddress,
       amountOfTokenToBuy,
       ICOToken
@@ -260,6 +260,7 @@ const buyWithSol = async (tokenBuyerAddress, amountOfTokenToBuy) => {
 };
 
 const buyWithUSDT = async (tokenBuyerAddress, amountOfTokenToBuy) => {
+      
   let transactionSuccess = false;
   try {
     const currentSale = getCurrentSalePeriod();
@@ -294,7 +295,7 @@ const buyWithUSDT = async (tokenBuyerAddress, amountOfTokenToBuy) => {
  
     // 2) Transfer token from tokenHolder -> buyer
     const tokenTransferHash = await transferToken(
-        ICOTOkenPrivateKey,
+        ICOTokenPrivateKey,
       tokenBuyerAddress,
       amountOfTokenToBuy,
       ICOToken
@@ -314,8 +315,8 @@ const buyWithUSDT = async (tokenBuyerAddress, amountOfTokenToBuy) => {
 };
 
 // --- Example Usage ---
+const amountOfTokenToBuy = 10000;
 const tokenBuyerAddress = "4zAoNKa2pHnSwhYN5XEgK4K7RvhGaQvM3a8LwqtXShVE";
-const amountOfTokenToBuy = 1000000;
 
 // Uncomment whichever purchase flow you want to test
 buyWithUSDT(tokenBuyerAddress, amountOfTokenToBuy);
