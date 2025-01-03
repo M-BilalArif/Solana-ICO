@@ -15,8 +15,8 @@ const connection = new Connection("https://api.devnet.solana.com");
 
 // --- Sale Periods ---
 const salePeriods = [
-  { start: "2024-12-29", end: "2025-01-02", price: 0.00105, availableTokens: 70000000 },
-  { start: "2025-01-03", end: "2025-01-20", price: 0.001125, availableTokens: 80000000 },
+  { start: "2024-12-29", end: "2025-01-03", price: 0.00105, availableTokens: 70000000 },
+  { start: "2025-01-04", end: "2025-01-20", price: 0.001125, availableTokens: 80000000 },
   { start: "2025-01-21", end: "2025-01-30", price: 0.0012, availableTokens: 100000000 },
   { start: "2025-01-31", end: "2025-02-09", price: 0.001275, availableTokens: 100000000 },
   { start: "2025-02-10", end: "2025-02-19", price: 0.00135, availableTokens: 90000000 },
@@ -198,7 +198,7 @@ const calculatePhaseBalance = (currentSale) => {
   }
 };
 
-const BuyWithUSDT = async (amountOfTokenToBuy) => {
+const BuyWithUSDT = async (amountOfCurrency) => {
    try {
     const currentSale = getCurrentSalePeriod();
     if (!currentSale) throw new Error("No active sale at the moment.");
@@ -206,7 +206,8 @@ const BuyWithUSDT = async (amountOfTokenToBuy) => {
     await sleep(5000);
 
     const tokenHolderBalance = await getTokenBalance(ICOHolderAddress, ICOToken);
-    const remainingBalance = tokenHolderBalance - amountOfTokenToBuy;
+    const tokentoSell=amountOfCurrency/currentSale.price;
+    const remainingBalance = tokenHolderBalance - tokentoSell;
     const phaseminimumBalance = calculatePhaseBalance(currentSale);
     const tokenInSale = remainingBalance - phaseminimumBalance;
     if (phaseminimumBalance > remainingBalance || tokenInSale < 0) {
@@ -214,10 +215,10 @@ const BuyWithUSDT = async (amountOfTokenToBuy) => {
     }
 
     const tokenPriceUSD = currentSale.price;
-    const amountInUSDT = amountOfTokenToBuy * tokenPriceUSD;
+    const amountInUSDT = tokentoSell * tokenPriceUSD;
 
     console.log(`VLN Price ${tokenPriceUSD}.`);
-    console.log(`Price in USDT ${amountInUSDT}.`);
+    console.log(`VLN token recived  ${tokentoSell}.`);
     return amountInUSDT; // Return the amount in USDT
   } catch (error) {
     console.error(`Error : ${error.message}`);
@@ -226,10 +227,10 @@ const BuyWithUSDT = async (amountOfTokenToBuy) => {
   };
 
 // --- Core Logic for Buying Tokens ---
-const buyWithSol = async (amountOfTokenToBuy) => {
+const buyWithSol = async (amountOfCurrency) => {
   try {
     // Get the amount in USDT from BuyWithUSDT function
-    const amountInUSDT = await BuyWithUSDT(amountOfTokenToBuy);
+    const amountInUSDT = await BuyWithUSDT(amountOfCurrency);
 
     const solPrice = await fetchSolanaPrice();
     const amountInSOL = amountInUSDT / solPrice;
@@ -257,12 +258,10 @@ const ExicuteTransaction = async (tokenBuyerAddress,amountOfTokenToTransfer) => 
 };
 
 
-const amountOfTokenToTransfer = 1000;
+const amountOfCurrency = 1.05;
+const tokenBuyerAddress = "4zAoNKa2pHnSwhYN5XEgK4K7RvhGaQvM3a8LwqtXShVE";
 
+// BuyWithUSDT(amountOfCurrency);
+buyWithSol(amountOfCurrency);
 
-// const tokenBuyerAddress = "4zAoNKa2pHnSwhYN5XEgK4K7RvhGaQvM3a8LwqtXShVE";
-// BuyWithUSDT(amountOfTokenToBuy);
-// Uncomment whichever purchase flow you want to test
-
-buyWithSol(amountOfTokenToTransfer);
-// ExicuteTransaction(tokenBuyerAddress,amountOfTokenToTransfer);
+// ExicuteTransaction(tokenBuyerAddress,amountOfTokenToBuy);
